@@ -158,7 +158,7 @@ def csrf_lab_login(request):
     elif request.method == 'POST':
         password = request.POST.get('password')
         username = request.POST.get('username')
-        password = hashlib.md5(password.encode()).hexdigest()
+        password = hashlib.sha256(password.encode()).hexdigest()
         User = CSRF_user_tbl.objects.filter(username=username, password=password)
         if User:
             payload ={
