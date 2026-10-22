@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master, tp2-cicd ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, tp2-cicd ]
 
 jobs:
   build-test:
