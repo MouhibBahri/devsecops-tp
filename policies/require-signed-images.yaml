@@ -1,0 +1,28 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-signed-images
+spec:
+  webhookTimeoutSeconds: 30
+  background: false
+  rules:
+    - name: verify-cosign-signature
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: ["pygoat"]
+      verifyImages:
+        - imageReferences: ["*"]
+          failureAction: Enforce
+          mutateDigest: true
+          verifyDigest: true
+          required: true
+          attestors:
+            - entries:
+                - keys:
+                    publicKeys: |-
+                      -----BEGIN PUBLIC KEY-----
+                      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEoTtKhAjZt06ZVE+Vr2ahqIn6ha1J
+                      +YgsMgyVW/ZmFUg+Inuv0fjD22wJZCQ7gVvJkIiGo8ne3kitYySU9KTsjA==
+                      -----END PUBLIC KEY-----
