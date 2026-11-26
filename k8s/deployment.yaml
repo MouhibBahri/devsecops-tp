@@ -2,6 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pygoat
+  namespace: pygoat
+  labels:
+    app: pygoat
 spec:
   replicas: 1
   selector:
@@ -12,13 +15,38 @@ spec:
       labels:
         app: pygoat
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: pygoat
-          image: pygoat:hardened
-          imagePullPolicy: Never
+          image: ghcr.io/mouhibbahri/pygoat:1.0.0   # replaced by a digest in Step 3
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "python manage.py migrate --noinput && exec gunicorn --bind 0.0.0.0:8000 --workers 2 pygoat.wsgi"]
           ports:
             - containerPort: 8000
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           env:
+            - name: DJANGO_DB_PATH
+              value: /tmp/db.sqlite3
+            - name: PYGOAT_LOG_PATH
+              value: /tmp/app.log
             - name: DJANGO_SECRET_KEY
               valueFrom:
                 secretKeyRef:
@@ -29,11 +57,21 @@ spec:
                 secretKeyRef:
                   name: pygoat-secrets
                   key: SECRET_COOKIE_KEY
+          envFrom:
+            - secretRef:
+                name: aws-credentials
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: pygoat
+  namespace: pygoat
 spec:
   selector:
     app: pygoat

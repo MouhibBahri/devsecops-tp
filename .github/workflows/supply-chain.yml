@@ -28,3 +28,13 @@ jobs:
 
       - name: Scan the whole git history
         run: ./gitleaks git . --redact --verbose
+  iac-scan:
+    name: iac-scan (Trivy config)
+    runs-on: ubuntu-latest
+    needs: secret-scan
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan Kubernetes manifests (fail on HIGH/CRITICAL)
+        run: |
+          docker run --rm -v "$PWD:/src" aquasec/trivy:0.76.2 config \
+            --severity HIGH,CRITICAL --exit-code 1 /src/k8s

@@ -26,11 +26,10 @@ COPY . /app/
 
 RUN python3 /app/manage.py migrate
 
-# Run as a dedicated non-root user, not root
-RUN addgroup --system pygoat \
-    && adduser --system --ingroup pygoat --home /app --no-create-home pygoat \
+RUN addgroup --system --gid 10001 pygoat \
+    && adduser --system --uid 10001 --ingroup pygoat --home /app --no-create-home pygoat \
     && chown -R pygoat:pygoat /app
-USER pygoat
+USER 10001
 
 EXPOSE 8000
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers","6", "pygoat.wsgi"]

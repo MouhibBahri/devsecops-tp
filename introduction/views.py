@@ -634,7 +634,7 @@ def debug(request):
     return response
 
 # Logging basic configuration
-logging.basicConfig(level=logging.DEBUG,filename='app.log')
+logging.basicConfig(level=logging.DEBUG, filename=os.environ.get('PYGOAT_LOG_PATH', 'app.log'))
 
 @authentication_decorator
 def a10_lab2(request):
